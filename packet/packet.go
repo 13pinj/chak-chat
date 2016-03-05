@@ -49,3 +49,23 @@ func (p *Packet) WriteTo(w io.Writer) (n int64, err error) {
 	v, err := w.Write(buf)
 	return int64(v), err
 }
+
+// Request - структура запроса.
+type Request struct {
+	Packet
+	// Поле "req". Редактирование заголовка запроса должно происходить
+	// только через это поле: значение Payload["req"] будет игнорировано.
+	Head string
+}
+
+// ToRequest проверяет, является ли пакет запросом. В случае успеха, возвращает
+// структуру запроса, эквивалентную пакету. В случае неуспеха, возвращает в тексте
+// ошибки критерий, по которому пакет не прошел проверку.
+func ToRequest(p *Packet) (*Request, error) {
+	return nil, nil
+}
+
+// WriteTo кодирует запрос и записывает в `w`. Реализует интерфейс `io.WriterTo`.
+func (req *Request) WriteTo(w io.Writer) (n int64, err error) {
+	return 0, nil
+}
