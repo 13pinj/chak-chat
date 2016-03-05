@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 )
 
@@ -88,4 +89,31 @@ func TestPacket_EncodingDecoding(t *testing.T) {
 		t.Fatal("ReadFrom: нулевой указатель")
 	}
 	compare(p3, r3)
+}
+
+func TestPacket_EdgeCases(t *testing.T) {
+	brokenJSON := `{"val1": 123, "val2":}`
+	buf1 := bytes.NewBufferString(brokenJSON)
+	p, err := ReadFrom(buf1)
+	if p != nil || err == nil {
+		t.Error("ReadFrom: должен сообщать об ошибках парсинга")
+	}
+
+	p = &Packet{
+		ID: "my-packet",
+		Payload: Payload{
+			"val1": "str",
+			"val2": float64(-1),
+			"val3": true,
+		},
+	}
+	jb, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	buf2 := bytes.NewBuffer(jb)
+	p, err = ReadFrom(buf2)
+	if p != nil || err == nil {
+		t.Error("ReadFrom: должен сообщать о неожиданном конце потока")
+	}
 }
