@@ -69,3 +69,18 @@ func ToRequest(p *Packet) (*Request, error) {
 func (req *Request) WriteTo(w io.Writer) (n int64, err error) {
 	return 0, nil
 }
+
+type Response struct {
+	Packet
+	// Редактирование статуса должно происходить
+	// только через это поле: значение Payload["status"] будет игнорировано.
+	Status string
+}
+
+func ToResponse(p *Packet) (*Response, error) {
+	return nil, nil
+}
+
+func (p *Response) WriteTo(w io.Writer) (n int64, err error) {
+	return 0, nil
+}

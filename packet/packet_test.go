@@ -206,3 +206,92 @@ func TestRequest_NonReqPacket(t *testing.T) {
 		t.Error("ToRequest: ожидается ошибка для пакета-незапроса")
 	}
 }
+
+func compareResponses(t *testing.T, pa, pb *Response) {
+	if pa.Status != pb.Status {
+		t.Errorf("Не совпадают статусы: %q получено, %q отправлено", pb.Status, pa.Status)
+	}
+	ppa, ppb := pa.Packet, pb.Packet
+	comparePackets(t, &ppa, &ppb)
+}
+
+func TestResponse_EncodingDecoding(t *testing.T) {
+	p1 := &Response{
+		Status: "ok",
+		Packet: Packet{
+			ID: "my-packet",
+			Payload: Payload{
+				"val1": "str",
+				"val2": float64(-1),
+				"val3": true,
+			},
+		},
+	}
+	p2 := &Response{
+		Status: "err",
+		Packet: Packet{
+			ID: "my-new-packet",
+			Payload: Payload{
+				"vala": "text",
+				"valb": false,
+				"valc": float64(3.14),
+			},
+		},
+	}
+	p3 := &Response{
+		Status: "internal",
+		Packet: Packet{
+			ID: "000",
+			Payload: Payload{
+				"val_i":   false,
+				"val_ii":  float64(2.71),
+				"val_iii": "line",
+			},
+		},
+	}
+
+	buf1, buf2, buf3 := &bytes.Buffer{}, &bytes.Buffer{}, &bytes.Buffer{}
+	p1.WriteTo(buf1)
+	p2.WriteTo(buf2)
+	p3.WriteTo(buf3)
+
+	rp1, _ := ReadFrom(buf1)
+	r1, err := ToResponse(rp1)
+	if r1 == nil || err != nil {
+		t.Fatalf("ToResponse: неожиданная ошибка: %v", err)
+	}
+	compareResponses(t, p1, r1)
+
+	rp2, _ := ReadFrom(buf2)
+	r2, err := ToResponse(rp2)
+	if r2 == nil || err != nil {
+		t.Fatalf("ToResponse: неожиданная ошибка: %v", err)
+	}
+	compareResponses(t, p2, r2)
+
+	rp3, _ := ReadFrom(buf3)
+	r3, err := ToResponse(rp3)
+	if r3 == nil || err != nil {
+		t.Fatalf("ToResponse: неожиданная ошибка: %v", err)
+	}
+	compareResponses(t, p3, r3)
+}
+
+func TestResponse_NonResPacket(t *testing.T) {
+	p := &Packet{
+		ID: "my-packet",
+		Payload: Payload{
+			"val1": "str",
+			"val2": float64(-1),
+			"val3": true,
+		},
+	}
+	buf := &bytes.Buffer{}
+	p.WriteTo(buf)
+
+	r, _ := ReadFrom(buf)
+	rr, err := ToResponse(r)
+	if rr != nil || err == nil {
+		t.Error("ToResponse: ожидается ошибка для пакета-незапроса")
+	}
+}
